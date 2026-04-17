@@ -16,7 +16,9 @@ import {
   Divide, 
   Equal, 
   RotateCcw,
-  Check
+  Check,
+  ExternalLink,
+  Smartphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toPng } from 'html-to-image';
@@ -59,6 +61,7 @@ export default function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [shouldResetDisplay, setShouldResetDisplay] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const [settings, setSettings] = useState<BusinessSettings>({
     name: 'আমার দোকান (My Shop)',
@@ -80,6 +83,14 @@ export default function App() {
 
     const savedHistory = localStorage.getItem('calc_history');
     if (savedHistory) setHistory(JSON.parse(savedHistory));
+
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
 
   useEffect(() => {
@@ -205,6 +216,18 @@ export default function App() {
     const newHistory = history.map(item => item.id === id ? { ...item, label } : item);
     setHistory(newHistory);
     localStorage.setItem('calc_history', JSON.stringify(newHistory));
+  };
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      alert('আপনার ব্রাউজার এই মুহূর্তে ইন্সটল সাপোর্ট করছে না বা এটি ইতিমধ্যে ইন্সটল করা আছে।');
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
   };
 
   return (
@@ -459,6 +482,50 @@ export default function App() {
                       <option value="prefix">আগে (Prefix)</option>
                       <option value="suffix">পরে (Suffix)</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 pt-2">
+                  <button 
+                    type="button"
+                    onClick={handleInstallClick}
+                    className={cn(
+                      "flex items-center justify-between p-4 rounded-2xl transition-all group",
+                      deferredPrompt 
+                        ? "bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20" 
+                        : "bg-zinc-800/50 text-zinc-500 cursor-not-allowed border border-zinc-800"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "p-2 rounded-lg",
+                        deferredPrompt ? "bg-orange-500/20" : "bg-zinc-800"
+                      )}>
+                        <Smartphone size={18} />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-bold text-sm block">অ্যাপটি ইন্সটল করুন</span>
+                        <span className="text-[10px] opacity-60">ফোনে ফুল-স্ক্রিন চালানোর জন্য</span>
+                      </div>
+                    </div>
+                    {deferredPrompt && <Download size={16} className="animate-bounce" />}
+                  </button>
+
+                  <div className="pt-2 border-t border-zinc-800">
+                    <a 
+                      href="https://zunaidhosse.github.io/My-contact/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-4 bg-zinc-800/50 hover:bg-zinc-800 rounded-2xl transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                          <ExternalLink size={18} />
+                        </div>
+                        <span className="font-bold text-sm">হেল্প লাইন (Help Line)</span>
+                      </div>
+                      <X size={16} className="text-zinc-600 group-hover:text-zinc-400 rotate-45" />
+                    </a>
                   </div>
                 </div>
                 

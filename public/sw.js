@@ -1,9 +1,9 @@
 // Basic Service Worker for Offline Caching
 const CACHE_NAME = 'smart-calc-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
